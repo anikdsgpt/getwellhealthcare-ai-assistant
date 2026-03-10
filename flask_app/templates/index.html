@@ -126,18 +126,30 @@
     <script type="module">
       import { createChat } from 'https://cdn.jsdelivr.net/npm/@n8n/chat/dist/chat.bundle.es.js';
       
+      // Initialize chat widget immediately
+      const chatWidget = createChat({
+        webhookUrl: 'https://anikdasgupta108.app.n8n.cloud/webhook/e1663968-d7d6-40fc-8575-425b6b5dab48/chat',
+        initialMessages: ['Welcome to Get Well Healthcare! 🏥', 'How can I help you today?'],
+        i18n: { 
+          en: { 
+            title: 'Your AI Chatbot Assistant', 
+            subtitle: 'Get Well Healthcare', 
+            inputPlaceholder: 'Describe your symptoms...',
+            footer: 'Powered by AI'
+          } 
+        },
+        showWelcomeScreen: true
+      });
+      
+      // Make openChatbot function available globally
       window.openAIChatbot = function() {
-        createChat({
-          webhookUrl: 'https://anikdasgupta108.app.n8n.cloud/webhook/e1663968-d7d6-40fc-8575-425b6b5dab48/chat',
-          initialMessages: ['Welcome to Get Well Healthcare! 🏥', 'How can I help you today?'],
-          i18n: { 
-            en: { 
-              title: 'Get Well Healthcare', 
-              subtitle: 'AI Medical Assistant', 
-              inputPlaceholder: 'Describe your symptoms...' 
-            } 
-          }
-        });
+        // Trigger click on chat widget button
+        const chatButton = document.querySelector('[class*="chat"][class*="button"]') || 
+                          document.querySelector('button[aria-label*="chat" i]') ||
+                          document.querySelector('.n8n-chat-button');
+        if (chatButton) {
+          chatButton.click();
+        }
       };
     </script>
 </body>
