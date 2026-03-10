@@ -11,25 +11,21 @@ function closeBookingForm() {
     document.getElementById('formMessage').innerHTML = '';
 }
 
-// Open chatbot modal
+// Open chatbot in new window
 function openChatbot() {
-    document.getElementById('chatbotModal').style.display = 'block';
+    window.open('https://anikdasgupta108.app.n8n.cloud/webhook/e1663968-d7d6-40fc-8575-425b6b5dab48/chat', '_blank', 'width=800,height=600');
 }
 
-// Close chatbot modal
+// Close chatbot modal (not needed anymore)
 function closeChatbot() {
-    document.getElementById('chatbotModal').style.display = 'none';
+    // Not used
 }
 
 // Close modal when clicking outside
 window.onclick = function(event) {
     const bookingModal = document.getElementById('bookingModal');
-    const chatbotModal = document.getElementById('chatbotModal');
     if (event.target == bookingModal) {
         closeBookingForm();
-    }
-    if (event.target == chatbotModal) {
-        closeChatbot();
     }
 }
 
