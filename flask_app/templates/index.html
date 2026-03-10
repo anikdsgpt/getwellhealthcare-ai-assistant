@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Get Well Healthcare - AI Medical Assistant</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://cdn.jsdelivr.net/npm/@n8n/chat/dist/style.css" rel="stylesheet" />
 </head>
 <body>
     <header>
@@ -121,8 +122,23 @@
         </div>
     </div>
 
-    <!-- Chatbot opens in new tab -->
-
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script type="module">
+      import { createChat } from 'https://cdn.jsdelivr.net/npm/@n8n/chat/dist/chat.bundle.es.js';
+      
+      window.openAIChatbot = function() {
+        createChat({
+          webhookUrl: 'https://anikdasgupta108.app.n8n.cloud/webhook/e1663968-d7d6-40fc-8575-425b6b5dab48/chat',
+          initialMessages: ['Welcome to Get Well Healthcare! 🏥', 'How can I help you today?'],
+          i18n: { 
+            en: { 
+              title: 'Get Well Healthcare', 
+              subtitle: 'AI Medical Assistant', 
+              inputPlaceholder: 'Describe your symptoms...' 
+            } 
+          }
+        });
+      };
+    </script>
 </body>
 </html>

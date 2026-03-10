@@ -11,14 +11,11 @@ function closeBookingForm() {
     document.getElementById('formMessage').innerHTML = '';
 }
 
-// Open chatbot in new window
+// Open chatbot widget
 function openChatbot() {
-    window.open('https://anikdasgupta108.app.n8n.cloud/webhook/e1663968-d7d6-40fc-8575-425b6b5dab48/chat', '_blank', 'width=800,height=600');
-}
-
-// Close chatbot modal (not needed anymore)
-function closeChatbot() {
-    // Not used
+    if (window.openAIChatbot) {
+        window.openAIChatbot();
+    }
 }
 
 // Close modal when clicking outside
