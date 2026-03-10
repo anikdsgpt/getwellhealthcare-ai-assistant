@@ -1,0 +1,34 @@
+🤖 Automation & AI Agent Projects
+These are like "invisible robots" that connect different apps (like Gmail, Slack, and WhatsApp) to do work while you sleep.
+HR & Recruitment
+Support Chatbot: A WhatsApp bot that answers employee questions (e.g., "How do I get my payslip?") so HR doesn't have to.
+Resume Scorer: A system that reads 100 resumes, finds the best 5, and tells you why they are a good fit.
+Onboarding Bot: When a new person joins, the robot automatically creates their email, adds them to Slack, and sends them a "Welcome" manual.
+Marketing & Sales
+Social Media Multi-Poster: You write one blog post; the AI automatically turns it into a LinkedIn post, a Tweet, and an Instagram caption.
+Lead Qualifier: When someone fills out a form on your site, an AI "agent" chats with them to see if they are a serious buyer before passing them to a human.
+Email Organizer: An AI that reads your inbox and highlights only the emails that are actually important, like "Refund Request" or "New Partnership."
+Operations & Tech
+Jira/Slack Sync: If a website bug is found, the robot creates a ticket for developers and alerts the team on Slack instantly.
+Meeting Notes to Action Items: An AI listens to your Zoom call, writes down the summary, and assigns "To-Do" tasks to everyone automatically.
+
+📱 No-Code / App-Based Projects
+These are visual tools (dashboards or web apps) that you can build without writing complex code.
+Dashboards for Business
+Resume Evaluation: A screen where you upload PDFs and see a "Leaderboard" of the best candidates.
+Employee Feedback: A tool that reads hundreds of anonymous employee comments and shows a chart saying, "People are happy with the food, but tired of long hours."
+Budget Tracker: An app where you log spending, and the AI warns you, "Hey, you're spending too much on coffee this month!"
+Content & Growth
+Idea to Video: A "Magic Box" where you type "Explain how a battery works," and the app gives you a fully edited video with a voiceover.
+Social Planner: A calendar app that suggests what you should post based on what is currently trending.
+Personal & Freelance
+Email-to-Task: A tool that turns messy client emails into a clean "To-Do" list.
+Proposal Generator: You put in a client’s name and what they want; the app builds a professional PDF contract for you.
+Student Progress: A teacher’s dashboard that flags students who are falling behind so they can get extra help.
+
+🛠️ Engineering & Dev Tools
+Tools built specifically to help software developers work faster.
+Bug Triage: A system that looks at 50 reported bugs and says, "Fix this one first; it's crashing the whole site!"
+Release Notes: Instead of writing "Updated stuff," the AI looks at the code changes and writes a professional "What's New" list for users.
+Code Reviewer: An AI "peer" that looks at your code and says, "You forgot to secure this password field."
+

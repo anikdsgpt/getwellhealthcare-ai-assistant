@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Get Well Healthcare - AI Medical Assistant</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header>
+        <nav>
+            <div class="logo">🏥 Get Well Healthcare</div>
+            <div class="nav-links">
+                <a href="#home">Home</a>
+                <a href="#services">Services</a>
+                <a href="#doctors">Doctors</a>
+                <a href="#contact">Contact</a>
+            </div>
+        </nav>
+    </header>
+
+    <section id="home" class="hero">
+        <h1>Get Well Healthcare</h1>
+        <p>Your Partner in Healing — AI-Powered Medical Assistance 24/7</p>
+        <button class="btn-primary" onclick="openBookingForm()">Book Appointment Now</button>
+    </section>
+
+    <section id="services" class="services">
+        <h2>Our Services</h2>
+        <div class="service-grid">
+            <div class="service-card" onclick="openChatbot()">
+                <h3>🤖 AI Appointment Booking</h3>
+                <p>Book appointments instantly with our AI assistant — fast, smart, and hassle-free.</p>
+            </div>
+            <div class="service-card">
+                <h3>🚨 24/7 Emergency Care</h3>
+                <p>Round-the-clock emergency services with rapid response teams ready when you need them.</p>
+            </div>
+            <div class="service-card">
+                <h3>👨‍⚕️ 15+ Specialists</h3>
+                <p>Expert doctors across multiple specializations delivering world-class care.</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="doctors" class="doctors">
+        <h2>Our Doctors</h2>
+        <div class="doctors-grid">
+            {% for doctor in doctors[:6] %}
+            <div class="doctor-card">
+                <div class="doctor-avatar">👨‍⚕️</div>
+                <h3>{{ doctor.Doctor_Name }}</h3>
+                <p class="specialization">{{ doctor.Specialization }}</p>
+                <p class="experience">{{ doctor.Experience }} experience</p>
+                <p class="fee">₹{{ doctor.Consultation_Fee }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section id="contact" class="contact">
+        <h2>Contact Us</h2>
+        <div class="contact-grid">
+            <div class="contact-item">
+                <h3>📞 1800-123-4567</h3>
+                <p>Toll-Free 24/7</p>
+            </div>
+            <div class="contact-item">
+                <h3>📍 Tower A, Innovation Hub</h3>
+                <p>Sector 62, Noida - 201301</p>
+            </div>
+            <div class="contact-item">
+                <h3>🌐 www.getwellhealthcare.com</h3>
+                <p>Visit our website</p>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <p>© 2026 Get Well Healthcare. All rights reserved.</p>
+        <p>Powered by AI | Be10X Hackathon Project</p>
+    </footer>
+
+    <!-- Booking Form Modal -->
+    <div id="bookingModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeBookingForm()">&times;</span>
+            <h2>Book Appointment</h2>
+            <form id="bookingForm">
+                <input type="text" id="patientName" placeholder="Full Name *" required>
+                <input type="tel" id="patientPhone" placeholder="Phone Number (10 digits) *" pattern="[0-9]{10}" required>
+                <input type="email" id="patientEmail" placeholder="Email (optional)">
+                <textarea id="symptoms" placeholder="Symptoms / Reason for Visit *" required></textarea>
+                <input type="date" id="appointmentDate" required>
+                <select id="appointmentTime" required>
+                    <option value="">Select Time Slot *</option>
+                    <option value="Morning (9 AM - 1 PM)">Morning (9 AM - 1 PM)</option>
+                    <option value="Evening (3 PM - 7 PM)">Evening (3 PM - 7 PM)</option>
+                </select>
+                <select id="specialist" required>
+                    <option value="">Select Specialist *</option>
+                    <option value="General Physician">General Physician</option>
+                    <option value="Cardiologist">Cardiologist</option>
+                    <option value="Neurologist">Neurologist</option>
+                    <option value="Orthopedic">Orthopedic</option>
+                    <option value="Dermatologist">Dermatologist</option>
+                    <option value="Ophthalmologist">Ophthalmologist</option>
+                    <option value="Gastroenterologist">Gastroenterologist</option>
+                    <option value="Endocrinologist">Endocrinologist</option>
+                    <option value="Pulmonologist">Pulmonologist</option>
+                    <option value="Pediatrician">Pediatrician</option>
+                    <option value="Psychiatrist">Psychiatrist</option>
+                    <option value="Gynecologist">Gynecologist</option>
+                    <option value="Urologist">Urologist</option>
+                    <option value="ENT Specialist">ENT Specialist</option>
+                    <option value="Oncologist">Oncologist</option>
+                </select>
+                <button type="submit" class="btn-submit">Submit Appointment</button>
+            </form>
+            <div id="formMessage"></div>
+        </div>
+    </div>
+
+    <!-- Chatbot Modal -->
+    <div id="chatbotModal" class="modal">
+        <div class="modal-content chatbot-content">
+            <span class="close" onclick="closeChatbot()">&times;</span>
+            <iframe src="https://anikdasgupta108.app.n8n.cloud/webhook/e1663968-d7d6-40fc-8575-425b6b5dab48/chat" 
+                    width="100%" height="600px" frameborder="0"></iframe>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

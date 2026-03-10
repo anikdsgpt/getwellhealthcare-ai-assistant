@@ -1,0 +1,742 @@
+{
+  "name": "MEdic",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -208,
+        -96
+      ],
+      "id": "19ac336e-c51c-4fed-8c1a-6acc4e19de83",
+      "name": "When chat message received",
+      "webhookId": "e1663968-d7d6-40fc-8575-425b6b5dab48"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "You are a unified Operations, Policy, Inventory, and Order Automation AI Agent for the pharmacy brand MEdic, operating within an n8n-orchestrated system using Google Sheets and HTTP tools.\n\nYour responsibilities are strictly limited to:\n1. Inventory and order processing automation\n2. Inventory updates after verified orders\n3. Answering customer queries related to policies and FAQs\n\nYou must always operate within the defined tools, workflows, and constraints below.\n\n==================================================\nSYSTEM ARCHITECTURE OVERVIEW\n==================================================\n\nMEdic uses three core data sources:\n\n1. Inventory Sheet (Google Sheets)\n   - Master source of truth for stock, storage, and compliance data\n   - Updated only through the Update Inventory tool under strict conditions\n\n2. Orders Sheet (Google Sheets)\n   - Append-only transactional and event log\n   - Orders are appended first and updated later\n   - No rows are ever deleted\n\n3. Policies and FAQs Source\n   - Accessed exclusively via the tool named \"Get Policies and FAQs\"\n\nn8n orchestrates all validations, decisions, and updates.\n\n==================================================\nAVAILABLE TOOLS AND MANDATORY USAGE\n==================================================\n\nTool: Get Inventory\n- Type: Google Sheets (Get Rows)\n- Purpose:\n  - Fetch inventory data before any order confirmation\n  - Validate stock availability\n  - Identify Rx or OTC classification\n  - Identify storage conditions\n  - Check reorder levels and batch validity if available\n- Rules:\n  - Inventory is read-only in this step\n  - Matching key: Item Name + Strength or Specification\n  - Must always be called before confirming or appending any order\n  - Do not proceed if validation fails\n\nTool: Update Orders\n- Type: Google Sheets (Append Row / Update Row)\n- Purpose:\n  - Append new customer orders\n  - Update order lifecycle fields\n- Rules:\n  - Append-first, update-later logic\n  - Order ID is the primary key\n  - No order row may ever be deleted\n\nTool: Update Inventory\n- Type: Google Sheets (Update Row)\n- Purpose:\n  - Update inventory stock levels after verified orders\n- Rules:\n  - Must only be used after Order Status is set to Verified\n  - Deduct inventory strictly based on Quantity Ordered\n  - Never update inventory for Pending, Cancelled, or Rejected orders\n  - Must not modify non-stock fields unless explicitly instructed\n\nTool: Get Policies and FAQs\n- Type: HTTP Request\n- Purpose:\n  - Retrieve official MEdic policies and FAQs\n- Rules:\n  - Must always be used before answering any policy-related query\n  - Responses must be based strictly on tool output\n  - Do not answer from memory or assumptions\n\n==================================================\nCUSTOMER INTERACTION RULES\n==================================================\n\n- Ask customers for the minimum information strictly required to proceed\n- Avoid unnecessary follow-up questions\n- If non-critical information is missing:\n  - Make reasonable, compliant, industry-standard assumptions\n  - Proceed using AI decision-making\n- If critical information is missing:\n  - Request only that specific missing detail\n\n==================================================\nORDER AND INVENTORY PROCESSING LOGIC\n==================================================\n\n1. Order Initiation\n- Capture basic customer and order details\n\n2. Inventory Validation\n- Use Get Inventory\n- Match Item Name and Strength or Specification\n- Validate:\n  - Stock availability\n  - Rx or OTC requirement\n  - Storage conditions\n  - Expired or invalid batches if data exists\n\n3. Prescription Validation\n- If item is Rx:\n  - Prescription upload is mandatory\n  - Order must not proceed until verified\n- OTC items do not require prescription\n\n4. Order Creation\n- Use Update Orders to append a new row\n- Set initial Order Status to Pending\n\n5. Pharmacist Verification\n- Upon approval:\n  - Update Order Status to Verified\n  - Mark Prescription Verified as Yes\n\n6. Inventory Update\n- Only after Order Status is Verified:\n  - Use Update Inventory to deduct stock\n  - Ensure updated stock reflects Quantity Ordered\n  - Check for low stock conditions after update\n\n7. Fulfillment and Delivery\n- Update order status progressively\n- Apply special handling for refrigerated items\n\n8. Post-Delivery and Exceptions\n- Returns, refunds, or cancellations update the same order row\n- Inventory is adjusted only if policy explicitly allows it\n- Orders sheet remains an immutable event log\n\n==================================================\nPOLICIES AND FAQ HANDLING RULES\n==================================================\n\n- Answer only policy- and FAQ-related customer queries\n- Always call Get Policies and FAQs before responding\n- Summarize long policy text into clear, customer-friendly language\n- Do not provide legal interpretation beyond the policy text\n- If information is unavailable:\n  - Clearly state it is not currently available\n  - Do not guess or hallucinate\n\n==================================================\nAUTOMATION RULES AND CONSTRAINTS\n==================================================\n\n- Inventory deduction occurs only after verification\n- Low stock alerts trigger when stock is less than or equal to Reorder Level\n- Inventory sheet is the single source of truth\n- Compliance and patient safety override speed or convenience\n- No medical advice, diagnosis, or treatment guidance is allowed\n- Do not bypass validations or workflow steps\n- Do not invent order states or inventory attributes\n\n==================================================\nOUT-OF-SCOPE HANDLING\n==================================================\n\n- If a query is not related to orders, inventory, policies, or FAQs:\n  - Politely state the limitation\n  - Direct the customer to MEdic customer support\n\n==================================================\nGOAL\n==================================================\n\nEnsure accurate, compliant, auditable, and customer-friendly automation for:\n- Inventory validation and updates\n- Order lifecycle management\n- Policy and FAQ support\n\nAll actions must strictly follow the defined tools, workflows, and constraints.\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        0,
+        -96
+      ],
+      "id": "528d570e-246b-4d3b-bde6-766a4d8f92de",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -320,
+        112
+      ],
+      "id": "ec0dea94-e1d6-4076-b909-22ae1d5f8032",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "JVwoMLPAxKQ3nun3",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -160,
+        144
+      ],
+      "id": "27757923-1178-4adf-8424-48c899d53b22",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://prod-1-data.ke.pinecone.io/assistant/chat/medic",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Api-Key",
+              "value": "pcsk_43ygBS_HDzcPTFGVmXDodgG4NHkMLj1J7wch6CJprpoTjWu8m7sToSwDVtgDEyXvgst8sA"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"{{$fromAI(\"searchQuery\")}}\"\n    }\n  ],\n  \"stream\": false,\n  \"model\": \"gpt-4o\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [
+        32,
+        144
+      ],
+      "id": "fff34a1f-2121-410a-94b7-9ccaffa4eb2e",
+      "name": "Get Policies and FAQs"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "13LGAyQhMmIOa9HdKGfHk-Z0yCRZhPahnm85OJU9x-Tc",
+          "mode": "list",
+          "cachedResultName": "MEdic Dashboard",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/13LGAyQhMmIOa9HdKGfHk-Z0yCRZhPahnm85OJU9x-Tc/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Inventory",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/13LGAyQhMmIOa9HdKGfHk-Z0yCRZhPahnm85OJU9x-Tc/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        608,
+        128
+      ],
+      "id": "ef6c5df2-42a0-4c6b-b039-599f9352220a",
+      "name": "Get Inventory",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "QLbokOU9zqqN5CLV",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "13LGAyQhMmIOa9HdKGfHk-Z0yCRZhPahnm85OJU9x-Tc",
+          "mode": "list",
+          "cachedResultName": "MEdic Dashboard",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/13LGAyQhMmIOa9HdKGfHk-Z0yCRZhPahnm85OJU9x-Tc/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1820983079,
+          "mode": "list",
+          "cachedResultName": "Orders",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/13LGAyQhMmIOa9HdKGfHk-Z0yCRZhPahnm85OJU9x-Tc/edit#gid=1820983079"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Order ID": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Order_ID__using_to_match_', ``, 'string') }}",
+            "Order Date": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Order_Date', ``, 'string') }}",
+            "Order Time": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Order_Time', ``, 'string') }}",
+            "Customer ID": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Customer_ID', ``, 'string') }}",
+            "Customer Name": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Customer_Name', ``, 'string') }}",
+            "Customer Phone": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Customer_Phone', ``, 'string') }}",
+            "Customer Email": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Customer_Email', ``, 'string') }}",
+            "Delivery Type": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Delivery_Type', ``, 'string') }}",
+            "Delivery Address": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Delivery_Address', ``, 'string') }}",
+            "Item Category": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Item_Category', ``, 'string') }}",
+            "Item Name": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Item_Name', ``, 'string') }}",
+            "Strength / Specification": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Strength___Specification', ``, 'string') }}",
+            "Quantity Ordered": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Quantity_Ordered', ``, 'string') }}",
+            "Batch Number": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Batch_Number', ``, 'string') }}",
+            "Expiry Date": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Expiry_Date', ``, 'string') }}",
+            "Unit Price": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Unit_Price', ``, 'string') }}",
+            "Discount": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Discount', ``, 'string') }}",
+            "Tax Amount": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Tax_Amount', ``, 'string') }}",
+            "Total Amount": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Total_Amount', ``, 'string') }}",
+            "Prescription Required": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Prescription_Required', ``, 'string') }}",
+            "Prescription Uploaded": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Prescription_Uploaded', ``, 'string') }}",
+            "Prescription Verified": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Prescription_Verified', ``, 'string') }}",
+            "Order Status": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Order_Status', ``, 'string') }}",
+            "Payment Method": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Payment_Method', ``, 'string') }}",
+            "Payment Status": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Payment_Status', ``, 'string') }}",
+            "Delivery Partner": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Delivery_Partner', ``, 'string') }}",
+            "Expected Delivery Date": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Expected_Delivery_Date', ``, 'string') }}",
+            "Actual Delivery Date": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Actual_Delivery_Date', ``, 'string') }}",
+            "Storage Condition": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Storage_Condition', ``, 'string') }}",
+            "Pharmacist Remarks": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Pharmacist_Remarks', ``, 'string') }}",
+            "Return Requested": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Return_Requested', ``, 'string') }}",
+            "Refund Status": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Refund_Status', ``, 'string') }}",
+            "Order Source": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Order_Source', ``, 'string') }}",
+            "Created By": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Created_By', ``, 'string') }}",
+            "Last Updated": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Last_Updated', ``, 'string') }}"
+          },
+          "matchingColumns": [
+            "Customer Name"
+          ],
+          "schema": [
+            {
+              "id": "Order ID",
+              "displayName": "Order ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Order Date",
+              "displayName": "Order Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Order Time",
+              "displayName": "Order Time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Customer ID",
+              "displayName": "Customer ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Customer Name",
+              "displayName": "Customer Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Customer Phone",
+              "displayName": "Customer Phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Customer Email",
+              "displayName": "Customer Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Delivery Type",
+              "displayName": "Delivery Type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Delivery Address",
+              "displayName": "Delivery Address",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Item Category",
+              "displayName": "Item Category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Item Name",
+              "displayName": "Item Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Strength / Specification",
+              "displayName": "Strength / Specification",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Batch Number",
+              "displayName": "Batch Number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Expiry Date",
+              "displayName": "Expiry Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Quantity Ordered",
+              "displayName": "Quantity Ordered",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Unit Price",
+              "displayName": "Unit Price",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Discount",
+              "displayName": "Discount",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Tax Amount",
+              "displayName": "Tax Amount",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Total Amount",
+              "displayName": "Total Amount",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Prescription Required",
+              "displayName": "Prescription Required",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Prescription Uploaded",
+              "displayName": "Prescription Uploaded",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Prescription Verified",
+              "displayName": "Prescription Verified",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Order Status",
+              "displayName": "Order Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Payment Method",
+              "displayName": "Payment Method",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Payment Status",
+              "displayName": "Payment Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Delivery Partner",
+              "displayName": "Delivery Partner",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Expected Delivery Date",
+              "displayName": "Expected Delivery Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Actual Delivery Date",
+              "displayName": "Actual Delivery Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Storage Condition",
+              "displayName": "Storage Condition",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Pharmacist Remarks",
+              "displayName": "Pharmacist Remarks",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Return Requested",
+              "displayName": "Return Requested",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Refund Status",
+              "displayName": "Refund Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Order Source",
+              "displayName": "Order Source",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Created By",
+              "displayName": "Created By",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Last Updated",
+              "displayName": "Last Updated",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        400,
+        144
+      ],
+      "id": "b83d8545-2943-41d6-826a-5561cd12463e",
+      "name": "Update Orders",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "QLbokOU9zqqN5CLV",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "13LGAyQhMmIOa9HdKGfHk-Z0yCRZhPahnm85OJU9x-Tc",
+          "mode": "list",
+          "cachedResultName": "MEdic Dashboard",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/13LGAyQhMmIOa9HdKGfHk-Z0yCRZhPahnm85OJU9x-Tc/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Inventory",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/13LGAyQhMmIOa9HdKGfHk-Z0yCRZhPahnm85OJU9x-Tc/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Item Name": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Item_Name__using_to_match_', ``, 'string') }}",
+            "Reorder Level": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Reorder_Level', ``, 'string') }}"
+          },
+          "matchingColumns": [
+            "Item Name"
+          ],
+          "schema": [
+            {
+              "id": "Category",
+              "displayName": "Category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Item Name",
+              "displayName": "Item Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Strength / Specification",
+              "displayName": "Strength / Specification",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Form",
+              "displayName": "Form",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Unit",
+              "displayName": "Unit",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Storage Condition",
+              "displayName": "Storage Condition",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Rx / OTC",
+              "displayName": "Rx / OTC",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Reorder Level",
+              "displayName": "Reorder Level",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        224,
+        144
+      ],
+      "id": "f01f2197-b5a4-4057-9e0c-1a3f812093ab",
+      "name": "Update Inventory",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "QLbokOU9zqqN5CLV",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Policies and FAQs": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Inventory": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Orders": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Inventory": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "bf624e66-4907-4ddd-858f-245eea0c80e2",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "caccae29d2fcb02e51f1e4af08ec1c611d3d83713deb895ec56b1c3312c59031"
+  },
+  "id": "thddf56GkDMzPv03lXWyB",
+  "tags": []
+}

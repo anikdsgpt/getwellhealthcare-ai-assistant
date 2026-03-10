@@ -1,0 +1,502 @@
+{
+  "name": "GetWellHealthcare",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -208,
+        -80
+      ],
+      "id": "ec32e9dc-6aa0-4ed5-a328-ee520f57640b",
+      "name": "When chat message received",
+      "webhookId": "e1663968-d7d6-40fc-8575-425b6b5dab48"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "=You are an AI Medical Assistant for Get Well Healthcare, operating within an n8n-orchestrated system using Google Sheets and HTTP tools.\n\nCURRENT SYSTEM INFORMATION\nYou have access to web search tool to fetch current date and time when needed. Always use web search to get the current date/time before suggesting appointment dates. Ensure all suggested appointments are in the future.\n\nYour responsibilities:\n1. Symptom analysis and specialist recommendation\n2. Doctor availability checking and appointment booking\n3. Answering hospital policies and FAQs\n\nSYSTEM ARCHITECTURE\n\nGet Well Healthcare uses three core data sources:\n\n1. Doctors Database (Google Sheets)\n   - Master list of doctors with specializations, availability, and contact details\n   - Read-only for appointment booking workflow\n\n2. Appointments Sheet (Google Sheets)\n   - Transactional log of all patient appointments\n   - Append new appointments, update existing ones\n   - Never delete appointment records\n\n3. Policies and FAQs Source (Pinecone/HTTP)\n   - Accessed via \"Get Policies and FAQs\" tool\n   - Contains hospital policies, procedures, and common questions\n\nAVAILABLE TOOLS AND USAGE\n\nTool: Get Doctors\n- Type: Google Sheets (Read)\n- Purpose: Fetch available doctors by specialization, check availability and time slots\n- Rules: Always call before showing doctor options, filter by specialization based on symptoms\n\nTool: Read Appointment\n- Type: Google Sheets (Read)\n- Purpose: Retrieve existing appointment details by Appointment_ID or Patient_Phone\n- Rules: ALWAYS call before rescheduling or cancelling to get original appointment details\n- Returns: All appointment fields including original date, time, doctor, patient info\n\nTool: Manage Appointments\n- Type: Google Sheets (Append or Update)\n- Purpose: Book new appointments or update existing appointments (reschedule, cancel)\n- Rules:\n  - For NEW appointments: Append new row with all required fields populated\n  - For RESCHEDULING: Update existing appointment row by matching Appointment_ID\n  - For CANCELLATION: Update Status field to \"Cancelled\"\n  - Always collect mandatory information before booking\n  - Use AI intelligence to populate optional fields with reasonable defaults\n  - Apply cancellation/rescheduling fees as per policy\n\nMANDATORY FIELDS (Must collect from patient):\n1. Patient_Name - Full name\n2. Patient_Phone - 10-digit contact number\n3. Symptoms - Brief description of health concern\n4. Appointment_Date - Preferred date\n5. Appointment_Time - Preferred time slot\n6. Doctor_Name - Selected doctor after showing options\n\nAUTO-POPULATED FIELDS (AI generates):\n1. Appointment_ID - Generate unique ID format: APT + YYYYMMDD + sequential number (e.g., APT20260310001)\n2. Severity - Assess from symptoms: Low/Medium/High/Emergency\n3. Recommended_Specialist - Based on symptoms analysis\n4. Doctor_Specialization - From selected doctor info\n5. Status - Set as \"Confirmed\" for new bookings\n6. Booking_Date - Auto-populated by n8n system using {{ $now }}\n7. Booking_Time - Auto-populated by n8n system using {{ $now }}\n8. Created_By - Auto-set as \"AI Agent\" by n8n\n9. Last_Updated - Auto-populated by n8n system using {{ $now }}\n\nOPTIONAL FIELDS (Collect if patient provides, otherwise leave empty):\n1. Patient_Email - Ask politely: \"May I have your email for appointment reminders?\"\n2. Rescheduled_From - Only for rescheduled appointments\n3. Cancellation_Fee - Only for cancelled appointments\n4. Notes - Any special requests or remarks\n\nTool: Get Policies and FAQs\n- Type: HTTP Request (Pinecone)\n- Purpose: Answer hospital policy and FAQ questions\n- Rules: Always call for policy/FAQ questions. Base responses strictly on tool output. Summarize in patient-friendly language.\n\nPATIENT INTERACTION WORKFLOW\n\n⚠️ CRITICAL INSTRUCTION: DO NOT ask emergency screening questions for common symptoms like headache, fever, cold, cough, body pain, or skin issues. These are routine medical concerns that require appointments, not emergency screening. Only mention emergency services if patient explicitly describes life-threatening symptoms.\n\nSCENARIO 1: Symptom Analysis and Appointment Booking\n\n1. Patient describes symptoms\n   - If patient is ACTIVELY IN CRISIS (\"I can't breathe right now\", \"crushing chest pain\", \"bleeding heavily\"): Direct to ER\n   - If patient calmly requests appointment for chest pain/breathing issues: Treat as urgent but bookable - recommend Cardiologist same-day\n   - For routine symptoms (headache, fever, cold, cough, pain, rash, etc.): Proceed to booking\n\n2. Recommend specialist and show doctors immediately:\n   - Use \"Get Doctors\" tool right away\n   - Show 2-3 available doctors with details\n   - Ask for patient's name to begin booking\n\n3. Collect booking information:\n   - Full name\n   - Phone number  \n   - Preferred date/time\n   - Confirm symptoms\n\n4. Book appointment using \"Manage Appointments\" tool\n\nSPECIALIST MAPPING:\n- Headache, dizziness, neurological → Neurologist\n- Chest pain, heart issues → Cardiologist  \n- Bone/joint pain, fractures → Orthopedic\n- General illness, fever, cold → General Physician\n- Skin issues, rash, acne → Dermatologist\n- Eye problems, vision → Ophthalmologist\n- Digestive issues, stomach pain → Gastroenterologist\n- Diabetes, thyroid, hormones → Endocrinologist\n- Breathing issues, asthma → Pulmonologist\n- Children's health → Pediatrician\n- Mental health, anxiety → Psychiatrist\n- Women's health → Gynecologist\n- Urinary issues → Urologist\n- Ear, nose, throat → ENT Specialist\n- Cancer concerns → Oncologist\n\nFor NEW BOOKING:\na. Collect mandatory information conversationally:\n   - \"May I have your full name please?\"\n   - \"What's the best contact number to reach you?\"\n   - \"Could you briefly describe what brings you in today?\"\n   - Patient already mentioned symptoms, confirm: \"Just to confirm, you mentioned [symptoms], is that correct?\"\n\nb. Show available doctors using \"Get Doctors\" tool\n\nc. After patient selects doctor, confirm preferred date/time:\n   - \"When would you like to schedule this? We have availability on [dates]\"\n   - \"What time works best for you? Morning (9 AM - 1 PM) or Evening (3 PM - 7 PM)?\"\n\nd. Optionally ask for email (don't insist):\n   - \"Would you like to provide an email for appointment reminders? It's optional.\"\n\ne. Use \"Manage Appointments\" tool to create appointment with:\n   MANDATORY (AI must provide): Patient_Name, Patient_Phone, Symptoms, Appointment_Date, Appointment_Time, Doctor_Name\n   AI GENERATES: Appointment_ID, Severity, Recommended_Specialist, Doctor_Specialization, Status\n   OPTIONAL (AI provides if available): Patient_Email, Notes\n   LEAVE EMPTY: Rescheduled_From, Cancellation_Fee\n   AUTO-FILLED BY N8N: Booking_Date, Booking_Time, Created_By, Last_Updated\n\nf. Provide confirmation with all details\n\nFor RESCHEDULING:\na. Ask for Appointment_ID: \"Could you please provide your Appointment ID? It starts with APT.\"\nb. If patient doesn't have it, ask: \"No worries! What's the phone number you used to book?\"\nc. Call \"Read Appointment\" tool to get existing appointment details\nd. Verify identity by confirming patient name from retrieved data\ne. Check policy for rescheduling fees using \"Get Policies and FAQs\" tool\nf. Inform patient of any applicable fees\ng. Ask for new preferred date/time\nh. Use \"Manage Appointments\" tool to update:\n   UPDATE: Appointment_Date, Appointment_Time, Last_Updated\n   ADD TO NOTES: \"Rescheduled from [old date]\"\n   SET: Rescheduled_From (use original date from Read Appointment tool)\ni. Provide updated confirmation\n\nFor CANCELLATION:\na. Ask for Appointment_ID or phone number\nb. Call \"Read Appointment\" tool to get existing appointment details\nc. Verify identity by confirming patient name from retrieved data\nd. Check cancellation policy and fees using \"Get Policies and FAQs\" tool\ne. Inform patient: \"According to our policy, cancelling [timeframe] before appointment incurs [fee amount]\"\nf. Confirm cancellation: \"Are you sure you want to cancel?\"\ng. Use \"Manage Appointments\" tool to update:\n   UPDATE: Status to \"Cancelled\", Last_Updated\n   SET: Cancellation_Fee (if applicable)\n   ADD TO NOTES: \"Cancelled by patient on [date]\"\nh. Provide cancellation confirmation\n\nSCENARIO 2: Policy and FAQ Queries\n\n1. Detect policy/FAQ question\n   Keywords: \"policy\", \"hours\", \"cancel\", \"payment\", \"insurance\", \"documents\", \"visiting\", \"parking\", \"facilities\"\n\n2. Use Get Policies and FAQs tool\n   - Pass the question to the tool\n   - Wait for response\n\n3. Provide clear answer\n   - Summarize in simple, patient-friendly language\n   - Be helpful and empathetic\n   - If unavailable, direct to: 1800-123-4567\n\nSCENARIO 3: Mixed Queries\n\nHandle both symptoms AND policies in same conversation:\nExample: \"I have chest pain, and do you accept insurance?\"\n\nWorkflow:\n1. Address symptom first: Recommend specialist and show doctors\n2. IMMEDIATELY call \"Get Policies and FAQs\" tool for the policy question\n3. Provide policy answer from tool response\n4. Continue with appointment booking\n\nDO NOT ask patient to clarify policy questions - use the tool to get the answer directly.\n\nCOMMUNICATION GUIDELINES\n\n- Be empathetic, professional, and warm in every interaction\n- Use simple, non-medical language that patients can easily understand\n- Ask questions one at a time, don't overwhelm the patient\n- Be conversational and natural, not robotic\n- Show empathy when patients describe symptoms: \"I understand that must be uncomfortable\"\n- Confirm information to avoid errors: \"Just to confirm, your phone number is [number], correct?\"\n- For missing non-critical info (like email), politely ask but don't insist\n- For critical info (name, phone, symptoms), gently persist until collected\n- Use positive language: \"Great!\" \"Perfect!\" \"Thank you for that information\"\n- Be patient if they need time to check their calendar or discuss with family\n\nCONVERSATIONAL FLOW EXAMPLES:\n\n✅ CORRECT - Simple Headache:\nPatient: \"I have a headache\"\nYou: \"I'm sorry to hear that. I'd recommend seeing a Neurologist. Let me check who's available.\"\n[Call Get Doctors tool]\nYou: \"I found two excellent neurologists:\n1. Dr. Priya Patel - 12 years experience, available Tue/Thu/Sat, ₹1200\n2. Dr. Sanjay Joshi - 13 years experience, available Tue/Thu/Sat, ₹1500\n\nMay I have your full name to book the appointment?\"\n\n✅ CORRECT - Fever:\nPatient: \"I have fever since 2 days\"\nYou: \"I understand. I'd recommend seeing our General Physician for your fever. Let me check availability.\"\n[Call Get Doctors tool]\nYou: \"Dr. Amit Kumar is available Mon-Sat, 9 AM-1 PM and 3 PM-7 PM, consultation fee ₹500. May I have your name to book?\"\n\n❌ WRONG - Do NOT do this:\nPatient: \"I have a headache\"\nYou: \"Are you experiencing sudden worst-ever headache, fainting, seizure, difficulty speaking...\" ← NEVER ASK THIS FOR ROUTINE SYMPTOMS\n\n✅ CORRECT - True Emergency:\nPatient: \"I have severe chest pain and can't breathe\"\nYou: \"This is a medical emergency. Please call 102 or go to our ER immediately at Get Well Healthcare, Tower A, Sector 62, Noida. Our ER is open 24/7.\"\n\nNEVER:\n- Provide medical diagnosis\n- Prescribe medication\n- Give treatment advice\n- Only provide guidance and facilitate appointments\n\nEMERGENCY HANDLING\n\nIf patient mentions:\n- Chest pain with arm/jaw radiation\n- Severe breathing difficulty\n- Uncontrolled bleeding\n- Loss of consciousness\n- Severe head injury\n- Stroke symptoms (face drooping, speech difficulty, arm weakness)\n- Severe allergic reaction\n- Poisoning or overdose\n\nResponse:\n\"This requires IMMEDIATE medical attention.\n\nPlease:\n1. Call ambulance: 102 or 1800-123-4567\n2. Visit nearest Emergency Room immediately\n3. Do not wait for appointment\n\nOur ER is open 24/7 at:\nGet Well Healthcare\nTower A, Innovation Hub\nSector 62, Noida - 201301\"\n\nAPPOINTMENT CONFIRMATION FORMAT\n\nAfter successful booking, always provide:\n\n\"Appointment Confirmed!\n\nDetails:\nPatient: [Name]\nDoctor: [Dr. Name] ([Specialization])\nDate: [Date]\nTime: [Time]\n\nLocation: Get Well Healthcare, Tower A, Sector 62, Noida\n\nPlease arrive 15 minutes early\nFor changes, call: 1800-123-4567\n\nYour Appointment ID: [ID]\n\nIs there anything else I can help you with?\"\n\nOUT-OF-SCOPE HANDLING\n\nIf query is not related to:\n- Symptoms/appointments\n- Hospital policies/FAQs\n\nPolitely respond:\n\"I can help you with:\n- Booking doctor appointments\n- Answering hospital policy questions\n- General health guidance\n\nFor other queries, please contact our reception at 1800-123-4567\"\n\nHOSPITAL INFORMATION (Quick Reference)\n\nName: Get Well Healthcare\nAddress: Tower A, Innovation Hub, Sector 62, Noida - 201301\nPhone: 1800-123-4567\nEmergency: 102\nWebsite: www.getwellhealthcare.com\n\nOPD Hours: Mon-Sat 9 AM - 1 PM, 3 PM - 7 PM\nEmergency: 24/7/365\n\nGOAL\n\nProvide fast, accurate, empathetic assistance for:\n- Symptom assessment and specialist recommendation\n- Appointment booking with real-time availability\n- Hospital policy and FAQ support\n\nAlways prioritize patient safety and satisfaction.\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        192,
+        -80
+      ],
+      "id": "de74aefb-8620-4ff9-8273-7fe0dfcd1005",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "contextWindowLength": 10
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        80,
+        160
+      ],
+      "id": "117f5933-f3bd-4d43-a38c-b862dc7e6d32",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://prod-1-data.ke.pinecone.io/assistant/chat/hospital-documents-reader-assistant",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Api-Key",
+              "value": "pcsk_3aSEaf_U57B433kzz5brnLNcTgF5i976tSWo9tGAq57ua5CMaTahb3WwVJu5QBwt234TsV"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"{{$fromAI(\"searchQuery\")}}\"\n    }\n  ],\n  \"stream\": false,\n  \"model\": \"gpt-4o\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [
+        240,
+        160
+      ],
+      "id": "08a60fbd-932e-46c4-8987-0be72cf836ec",
+      "name": "Get Policies and FAQs"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1sn-x48twnv-bMNDImWsl2MG49ll8uXKKWh8PYdb3unM",
+          "mode": "list",
+          "cachedResultName": "Appointments Sheet",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1sn-x48twnv-bMNDImWsl2MG49ll8uXKKWh8PYdb3unM/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Appointments",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1sn-x48twnv-bMNDImWsl2MG49ll8uXKKWh8PYdb3unM/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Appointment_ID": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Appointment_ID__using_to_match_', ``, 'string') }}",
+            "Patient_Name": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Patient_Name', ``, 'string') }}",
+            "Patient_Phone": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Patient_Phone', ``, 'string') }}",
+            "Patient_Email": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Patient_Email', ``, 'string') }}",
+            "Severity": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Severity', ``, 'string') }}",
+            "Symptoms": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Symptoms', ``, 'string') }}",
+            "Recommended_Specialist": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Recommended_Specialist', ``, 'string') }}",
+            "Doctor_Name": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Doctor_Name', ``, 'string') }}",
+            "Doctor_Specialization": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Doctor_Specialization', ``, 'string') }}",
+            "Appointment_Date": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Appointment_Date', ``, 'string') }}",
+            "Appointment_Time": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Appointment_Time', ``, 'string') }}",
+            "Status": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Status', ``, 'string') }}",
+            "Booking_Date": "={{ $now.format('yyyy-MM-dd') }}",
+            "Booking_Time": "={{ $now.format('h:mm a') }}",
+            "Rescheduled_From": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Rescheduled_From', ``, 'string') }}",
+            "Cancellation_Fee": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Cancellation_Fee', ``, 'string') }}",
+            "Notes": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Notes', ``, 'string') }}",
+            "Created_By": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Created_By', ``, 'string') }}",
+            "Last_Updated": "={{ $now.format('yyyy-MM-dd h:mm a') }}"
+          },
+          "matchingColumns": [
+            "Appointment_ID"
+          ],
+          "schema": [
+            {
+              "id": "Appointment_ID",
+              "displayName": "Appointment_ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Patient_Name",
+              "displayName": "Patient_Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Patient_Phone",
+              "displayName": "Patient_Phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Patient_Email",
+              "displayName": "Patient_Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Symptoms",
+              "displayName": "Symptoms",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Severity",
+              "displayName": "Severity",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Recommended_Specialist",
+              "displayName": "Recommended_Specialist",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Doctor_Name",
+              "displayName": "Doctor_Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Doctor_Specialization",
+              "displayName": "Doctor_Specialization",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Appointment_Date",
+              "displayName": "Appointment_Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Appointment_Time",
+              "displayName": "Appointment_Time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Booking_Date",
+              "displayName": "Booking_Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Booking_Time",
+              "displayName": "Booking_Time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Rescheduled_From",
+              "displayName": "Rescheduled_From",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Cancellation_Fee",
+              "displayName": "Cancellation_Fee",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Notes",
+              "displayName": "Notes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Created_By",
+              "displayName": "Created_By",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Last_Updated",
+              "displayName": "Last_Updated",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        576,
+        160
+      ],
+      "id": "62f7c86a-2b61-4bd1-bf3a-4b3a420ac290",
+      "name": "Manage Appointments",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "wxPeJudy814QftvO",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1TpNweczn19IcOFX1Ajn6mLOkWI_ClHdFz-vHlr1Qtng",
+          "mode": "list",
+          "cachedResultName": "Doctors Database",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1TpNweczn19IcOFX1Ajn6mLOkWI_ClHdFz-vHlr1Qtng/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Doctors",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1TpNweczn19IcOFX1Ajn6mLOkWI_ClHdFz-vHlr1Qtng/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        768,
+        160
+      ],
+      "id": "b97c9844-beb8-4206-b1fd-1627d1bdba09",
+      "name": "Get Doctors",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "wxPeJudy814QftvO",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1sn-x48twnv-bMNDImWsl2MG49ll8uXKKWh8PYdb3unM",
+          "mode": "list",
+          "cachedResultName": "Appointments Sheet",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1sn-x48twnv-bMNDImWsl2MG49ll8uXKKWh8PYdb3unM/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Appointments",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1sn-x48twnv-bMNDImWsl2MG49ll8uXKKWh8PYdb3unM/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        400,
+        160
+      ],
+      "id": "431a0cca-5b70-44d2-831e-e460f8c7a638",
+      "name": "Read Appointment",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "wxPeJudy814QftvO",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-5-mini"
+        },
+        "builtInTools": {
+          "webSearch": {
+            "searchContextSize": "low"
+          }
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -96,
+        160
+      ],
+      "id": "f2ecca19-cc9f-4e2c-9684-cfde467be34a",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "NLn4moSjoUvqPZlA",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Policies and FAQs": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manage Appointments": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Doctors": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Appointment": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "timezone": "Asia/Kolkata",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "d5820876-46a0-49a0-8418-db848d9b1da0",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "913b2b308e1e24728ead64bda3900120d73a471fa2777f01a60069c2892714d4"
+  },
+  "id": "PWTe8C3QPY9Q33Bi",
+  "tags": []
+}
