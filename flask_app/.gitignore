@@ -31,3 +31,6 @@ Thumbs.db
 # Credentials
 *.json
 credentials/
+
+# Documentation (internal use only)
+documentation/
